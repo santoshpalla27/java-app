@@ -40,8 +40,8 @@ public class ConnectivityProbeService {
     }
 
     private void probeDatabase() {
-        failureService.checkLatency();
         long start = System.currentTimeMillis();
+        failureService.checkLatency();
         String status = "SUCCESS";
         String error = null;
         try {
@@ -57,8 +57,8 @@ public class ConnectivityProbeService {
     }
 
     private void probeRedis() {
-        failureService.checkLatency();
         long start = System.currentTimeMillis();
+        failureService.checkLatency();
         String status = "SUCCESS";
         String error = null;
         try {
@@ -75,8 +75,8 @@ public class ConnectivityProbeService {
     }
 
     private void probeKafka() {
-        failureService.checkLatency();
         long start = System.currentTimeMillis();
+        failureService.checkLatency();
         String status = "SUCCESS";
         String error = null;
         try {
