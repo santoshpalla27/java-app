@@ -24,7 +24,7 @@ public class KafkaEventProducer {
         try {
             String payload = objectMapper.writeValueAsString(event);
             kafkaTemplate.send(TOPIC, event.getTarget(), payload);
-            // log.info("Sent Kafka event: {}", payload);
+            log.info("Sent Kafka event: {}", payload);
         } catch (JsonProcessingException e) {
             log.error("Error serializing event", e);
         }

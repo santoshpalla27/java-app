@@ -21,7 +21,7 @@ public class KafkaEventConsumer {
 
     @KafkaListener(topics = "system.connectivity.events", groupId = "sys-platform-group")
     public void consume(String payload) {
-        // log.info("Consumed Kafka event: {}", payload);
+        log.info("Consumed Kafka event: {}", payload);
         try {
             // Forward directly to WebSocket subscribers
             // We could parse it to validate, but forwarding raw JSON is faster for now
