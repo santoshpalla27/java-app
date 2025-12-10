@@ -22,7 +22,9 @@ public class DataInitializer implements CommandLineRunner {
                 user.setPassword(validHash);
                 user.setRole(User.Role.ADMIN);
                 userRepository.save(user);
-                System.out.println("ADMIN user credentials updated/verified.");
+                System.out.println("==========================================");
+                System.out.println("ADMIN CREDENTIALS RESET TO: admin / admin123");
+                System.out.println("==========================================");
             },
             () -> {
                 User admin = new User();
@@ -30,7 +32,9 @@ public class DataInitializer implements CommandLineRunner {
                 admin.setPassword(validHash);
                 admin.setRole(User.Role.ADMIN);
                 userRepository.save(admin);
-                System.out.println("ADMIN user created.");
+                System.out.println("==========================================");
+                System.out.println("ADMIN USER CREATED: admin / admin123");
+                System.out.println("==========================================");
             }
         );
     }
