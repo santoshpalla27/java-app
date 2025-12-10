@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useToast } from '../../context/ToastContext';
 import api from '../../api/client';
 import { Skull, Database, Flame, Clock, Activity } from 'lucide-react';
 
 const FailurePanel = () => {
+    const { showToast } = useToast();
     const [, setLoading] = useState(false);
 
     const triggerUserFailure = async (type: string, value?: number) => {
@@ -10,15 +12,20 @@ const FailurePanel = () => {
         try {
             if (type === 'latency') {
                 await api.post(`/admin/failure/latency/${value}`);
+                showToast(value === 0 ? 'System Latency Reset 🚀' : `Injecting ${value}ms Latency 🐢`, 'warning');
             } else if (type === 'db-kill') {
                 await api.post('/admin/failure/db/kill');
+                showToast('Database Connections Killed! 🔥', 'error');
             } else if (type === 'db-exhaust') {
                 await api.post('/admin/failure/db/exhaust');
+                showToast('Exhausting DB Pool...', 'warning');
             } else if (type === 'redis-flush') {
                 await api.post('/admin/failure/redis/flush');
+                showToast('Redis Cache Flushed! 🧹', 'info');
             }
         } catch (e) {
             console.error(e);
+            showToast('Failed to execute chaos command', 'error');
         }
         setLoading(false);
     };
