@@ -19,3 +19,12 @@ docker-compose up --build
 ```
 Access at [http://localhost:3000](http://localhost:3000).
 Login: `admin` / `admin123`.
+
+## Troubleshooting
+
+### Kafka Cluster ID Mismatch
+If you see `InconsistentClusterIdException` in logs, the Kafka volumes are stale. Run:
+```bash
+docker-compose down -v
+docker-compose up --build
+```

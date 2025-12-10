@@ -20,7 +20,7 @@ services:
     networks:
       - sys-net
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,7 +39,7 @@ services:
     networks:
       - sys-net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -88,7 +88,7 @@ services:
   # BACKEND (Spring Boot)
   # ==========================================
   backend:
-    build: 
+    build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: sys-backend
@@ -116,13 +116,13 @@ services:
   # FRONTEND (React)
   # ==========================================
   frontend:
-    build: 
+    build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: sys-frontend
     restart: always
     ports:
-      - "3000:80"
+      - "80:80"
     depends_on:
       - backend
     networks:

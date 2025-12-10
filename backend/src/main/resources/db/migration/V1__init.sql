@@ -32,4 +32,4 @@ CREATE TABLE deployment_events (
 
 -- Insert default admin user (password: admin123)
 -- BCrypt encoded: $2a$10$wWw...
-INSERT INTO users (username, password, role) VALUES ('admin', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmjMaJJJwal3v1tJSk4C', 'ADMIN');
+INSERT INTO users (username, password, role) VALUES ('admin', '$2a$10$T4ImbDRHK0L/W8o4LfRp8ObdAw.Wtp1kos8pBIG6nlPCUo1ml8jHi.', 'ADMIN');
