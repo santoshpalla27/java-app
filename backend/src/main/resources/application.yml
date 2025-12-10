@@ -59,6 +59,9 @@ app:
   
   probe:
     interval-ms: 5000 # Probe every 5 seconds
+  
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:*}
 
 management:
   endpoints:

@@ -15,7 +15,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     useEffect(() => {
         // Use relative path so it goes through Nginx (port 80) -> Backend (port 8080)
-        const socket = new SockJS('/ws');
+        const socket = new SockJS(import.meta.env.VITE_WS_URL || '/ws');
         const stompClient = Stomp.over(socket);
 
         stompClient.connect({}, (frame) => {
