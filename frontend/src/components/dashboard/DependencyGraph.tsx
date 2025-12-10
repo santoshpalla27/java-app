@@ -11,7 +11,7 @@ const DependencyGraph: React.FC<Props> = ({ systemState }) => {
 
 
     // Nodes
-    const nodes: Node[] = [
+    const nodes: Node[] = React.useMemo(() => [
         {
             id: 'browser',
             type: 'input',
@@ -55,10 +55,10 @@ const DependencyGraph: React.FC<Props> = ({ systemState }) => {
                 border: systemState['KAFKA'] === 'FAILURE' ? '2px solid #ef4444' : '1px solid #334155', width: 120
             }
         }
-    ];
+    ], [systemState]);
 
     // Edges
-    const edges: Edge[] = [
+    const edges: Edge[] = React.useMemo(() => [
         { id: 'e1-2', source: 'browser', target: 'backend', animated: true, style: { stroke: '#94a3b8' } },
         {
             id: 'e2-3', source: 'backend', target: 'mysql', animated: true,
@@ -72,7 +72,7 @@ const DependencyGraph: React.FC<Props> = ({ systemState }) => {
             id: 'e2-5', source: 'backend', target: 'kafka', animated: true,
             style: { stroke: systemState['KAFKA'] === 'FAILURE' ? '#ef4444' : '#10b981', strokeWidth: 2 }
         },
-    ];
+    ], [systemState]);
 
     return (
         <div className="h-[350px] w-full bg-slate-900/50 rounded-lg border border-slate-800">
