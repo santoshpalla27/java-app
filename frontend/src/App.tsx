@@ -32,8 +32,11 @@ const AppRoutes = () => {
 
 function App() {
     return (
-        <AppRoutes />
-        </AuthProvider >
+        <AuthProvider>
+            <ToastProvider>
+                <AppRoutes />
+            </ToastProvider>
+        </AuthProvider>
     );
 }
 
