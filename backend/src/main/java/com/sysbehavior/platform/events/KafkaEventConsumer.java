@@ -1,5 +1,6 @@
 package com.sysbehavior.platform.events;
 
+import com.platform.connectivity.kafka.KafkaStateListener;
 import com.sysbehavior.platform.domain.ConnectivityEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,8 +19,15 @@ public class KafkaEventConsumer {
 
     @Autowired
     private ObjectMapper objectMapper;
+    
+    @Autowired(required = false)
+    private KafkaStateListener kafkaStateListener;
 
-    @KafkaListener(topics = "system.connectivity.events", groupId = "sys-platform-group")
+    @KafkaListener(
+        topics = "system.connectivity.events", 
+        groupId = "sys-platform-group",
+        containerFactory = "kafkaListenerContainerFactory"
+    )
     public void consume(String payload) {
         log.info("Consumed Kafka event: {}", payload);
         try {

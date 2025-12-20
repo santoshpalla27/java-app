@@ -1,0 +1,30 @@
+# Docker Compose: No Dependencies (Resilience Test)
+# Tests app startup with zero dependencies available
+
+services:
+  # ==========================================
+  # BACKEND ONLY (No MySQL, Redis, or Kafka)
+  # ==========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sys-backend-no-deps
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    environment:
+      # Point to non-existent services to test failure handling
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-not-available:3306/sys_platform
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_REDIS_HOST: redis-not-available
+      SPRING_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka-not-available:9092
+      APP_CORS_ALLOWED_ORIGINS: "*"
+    networks:
+      - sys-net
+
+networks:
+  sys-net:
+    driver: bridge

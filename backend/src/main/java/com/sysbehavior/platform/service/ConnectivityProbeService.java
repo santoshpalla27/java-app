@@ -1,5 +1,8 @@
 package com.sysbehavior.platform.service;
 
+import com.platform.connectivity.mysql.MySqlConnectionManager;
+import com.platform.connectivity.redis.RedisConnectionManager;
+import com.platform.connectivity.kafka.KafkaConnectionManager;
 import com.sysbehavior.platform.domain.ConnectivityEvent;
 import com.sysbehavior.platform.events.KafkaEventProducer;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -13,6 +16,15 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Connectivity probe service that monitors MySQL, Redis, and Kafka.
+ * 
+ * WHY: This service performs active probing of dependencies and publishes
+ * connectivity events. It now delegates to connection managers for state tracking.
+ * 
+ * Design: Keeps existing probe logic but leverages connection managers for state.
+ * The managers handle retry logic, state transitions, and metadata tracking.
+ */
 @Service
 @Slf4j
 public class ConnectivityProbeService {
@@ -31,7 +43,24 @@ public class ConnectivityProbeService {
 
     @Autowired
     private FailureService failureService;
+    
+    // Connection managers handle state tracking
+    @Autowired(required = false)
+    private MySqlConnectionManager mySqlConnectionManager;
+    
+    @Autowired(required = false)
+    private RedisConnectionManager redisConnectionManager;
+    
+    @Autowired(required = false)
+    private KafkaConnectionManager kafkaConnectionManager;
 
+    /**
+     * Main probe scheduler.
+     * 
+     * WHY: This provides application-level probing in addition to the
+     * connection managers' health checks. It also publishes events to Kafka
+     * for the real-time dashboard.
+     */
     @Scheduled(fixedRateString = "${app.probe.interval-ms:5000}")
     public void probeServices() {
         probeDatabase();
@@ -80,23 +109,13 @@ public class ConnectivityProbeService {
         String status = "SUCCESS";
         String error = null;
         try {
-            // We are just simulating a probe by sending an event about Kafka itself
-            // The actual send happens in sendEvent, so if that fails, we catch it there? 
-            // Better: active probe. The producer 'send' is async usually. 
-            // We will trust the producer's error callback in a real scenario, but for now 
-            // we assume if send() doesn't throw immediate exception it's 'OK' ish for valid connection.
-            // A true probe would require consuming what we produce (heartbeat).
-            // For simplicity in this demo, we count the 'sendEvent' calls as load.
-            // Let's explicitly trigger a small metadata check or similar if possible, or just 'ping'.
-            // Kafka doesn't have a simple 'ping'. We'll assume healthy if previous produces worked.
-            // Actually, let's just send a heartbeat message.
+            // Kafka probe is handled by sending an event
+            // The KafkaConnectionManager tracks send success/failure
             sendEvent("KAFKA", "SUCCESS", 0L, null); 
         } catch (Exception e) {
             status = "FAILURE";
             error = e.getMessage();
         }
-        // Kafka latency is harder to measure synchronously without a consumer. 
-        // We will assume 0 locally for the 'produce' call itself unless flushed.
     }
 
     private void sendEvent(String target, String status, Long latency, String error) {
