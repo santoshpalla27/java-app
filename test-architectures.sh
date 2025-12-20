@@ -103,21 +103,21 @@ run_test() {
 
 # Test 1: Standard Local Setup
 run_test "Standard Local Setup" \
-    "docker compose.yml" \
+    "docker-compose.yml" \
     "CONNECTED" \
     "CONNECTED" \
     "CONNECTED"
 
 # Test 2: MySQL High Availability
 run_test "MySQL High Availability" \
-    "docker compose.mysql-ha.yml" \
+    "docker-compose.mysql-ha.yml" \
     "CONNECTED" \
     "CONNECTED" \
     "CONNECTED"
 
 # Test 3: Kafka Multi-Broker
 run_test "Kafka Multi-Broker Cluster" \
-    "docker compose.kafka-cluster.yml" \
+    "docker-compose.kafka-cluster.yml" \
     "CONNECTED" \
     "CONNECTED" \
     "CONNECTED"
