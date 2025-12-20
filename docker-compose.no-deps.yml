@@ -22,6 +22,8 @@ services:
       SPRING_REDIS_PORT: 6379
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka-not-available:9092
       APP_CORS_ALLOWED_ORIGINS: "*"
+      # Disable Flyway to prevent blocking startup when DB is unavailable
+      SPRING_FLYWAY_ENABLED: false
     networks:
       - sys-net
 
