@@ -68,6 +68,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> 
                 auth.requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
+                    .requestMatchers("/internal/**").permitAll() // Internal monitoring endpoints
                     .requestMatchers("/ws/**").permitAll() // WebSocket Setup info
                     .anyRequest().authenticated()
             );
