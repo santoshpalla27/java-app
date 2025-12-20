@@ -1,7 +1,7 @@
-package com.platform.connectivity.config;
+package com.sysbehavior.platform.connectivity.config;
 
-import com.platform.connectivity.mysql.MySqlStateListener;
-import com.platform.connectivity.core.ConnectivityRegistry;
+import com.sysbehavior.platform.connectivity.mysql.MySqlStateListener;
+import com.sysbehavior.platform.connectivity.core.ConnectivityRegistry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;

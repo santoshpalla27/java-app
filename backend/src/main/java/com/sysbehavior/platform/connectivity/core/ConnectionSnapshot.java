@@ -1,4 +1,4 @@
-package com.platform.connectivity.core;
+package com.sysbehavior.platform.connectivity.core;
 
 import lombok.Builder;
 import lombok.Value;

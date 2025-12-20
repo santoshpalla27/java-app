@@ -1,4 +1,4 @@
-package com.platform.connectivity.core;
+package com.sysbehavior.platform.connectivity.core;
 
 /**
  * Identifies the type of external dependency.

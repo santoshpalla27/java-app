@@ -1,8 +1,8 @@
-package com.platform.connectivity.kafka;
+package com.sysbehavior.platform.connectivity.kafka;
 
-import com.platform.connectivity.core.ConnectionState;
-import com.platform.connectivity.core.ConnectivityRegistry;
-import com.platform.connectivity.core.DependencyType;
+import com.sysbehavior.platform.connectivity.core.ConnectionState;
+import com.sysbehavior.platform.connectivity.core.ConnectivityRegistry;
+import com.sysbehavior.platform.connectivity.core.DependencyType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;

@@ -1,8 +1,8 @@
-package com.platform.connectivity.redis;
+package com.sysbehavior.platform.connectivity.redis;
 
-import com.platform.connectivity.core.ConnectionState;
-import com.platform.connectivity.core.ConnectivityRegistry;
-import com.platform.connectivity.core.DependencyType;
+import com.sysbehavior.platform.connectivity.core.ConnectionState;
+import com.sysbehavior.platform.connectivity.core.ConnectivityRegistry;
+import com.sysbehavior.platform.connectivity.core.DependencyType;
 import io.lettuce.core.event.connection.*;
 import io.lettuce.core.event.Event;
 import lombok.extern.slf4j.Slf4j;

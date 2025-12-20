@@ -1,6 +1,6 @@
-package com.platform.connectivity.config;
+package com.sysbehavior.platform.connectivity.config;
 
-import com.platform.connectivity.kafka.KafkaStateListener;
+import com.sysbehavior.platform.connectivity.kafka.KafkaStateListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

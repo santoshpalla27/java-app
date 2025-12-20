@@ -1,4 +1,4 @@
-package com.platform.connectivity.redis;
+package com.sysbehavior.platform.connectivity.redis;
 
 import io.lettuce.core.event.Event;
 import io.lettuce.core.event.EventBus;

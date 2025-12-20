@@ -1,4 +1,4 @@
-package com.platform.connectivity.kafka;
+package com.sysbehavior.platform.connectivity.kafka;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;

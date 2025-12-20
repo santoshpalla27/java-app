@@ -1,8 +1,8 @@
-package com.platform.connectivity.controller;
+package com.sysbehavior.platform.connectivity.controller;
 
-import com.platform.connectivity.core.ConnectionSnapshot;
-import com.platform.connectivity.core.ConnectivityRegistry;
-import com.platform.connectivity.core.DependencyType;
+import com.sysbehavior.platform.connectivity.core.ConnectionSnapshot;
+import com.sysbehavior.platform.connectivity.core.ConnectivityRegistry;
+import com.sysbehavior.platform.connectivity.core.DependencyType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

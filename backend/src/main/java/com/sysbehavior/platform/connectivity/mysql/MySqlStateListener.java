@@ -1,8 +1,8 @@
-package com.platform.connectivity.mysql;
+package com.sysbehavior.platform.connectivity.mysql;
 
-import com.platform.connectivity.core.ConnectionState;
-import com.platform.connectivity.core.ConnectivityRegistry;
-import com.platform.connectivity.core.DependencyType;
+import com.sysbehavior.platform.connectivity.core.ConnectionState;
+import com.sysbehavior.platform.connectivity.core.ConnectivityRegistry;
+import com.sysbehavior.platform.connectivity.core.DependencyType;
 import com.zaxxer.hikari.metrics.IMetricsTracker;
 import lombok.extern.slf4j.Slf4j;
 

@@ -2,7 +2,7 @@ package com.sysbehavior.platform.events;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.platform.connectivity.kafka.KafkaConnectionManager;
+import com.sysbehavior.platform.connectivity.kafka.KafkaConnectionManager;
 import com.sysbehavior.platform.domain.ConnectivityEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

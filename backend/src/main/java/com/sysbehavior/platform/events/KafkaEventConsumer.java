@@ -1,6 +1,6 @@
 package com.sysbehavior.platform.events;
 
-import com.platform.connectivity.kafka.KafkaStateListener;
+import com.sysbehavior.platform.connectivity.kafka.KafkaStateListener;
 import com.sysbehavior.platform.domain.ConnectivityEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

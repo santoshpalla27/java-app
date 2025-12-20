@@ -1,8 +1,8 @@
 package com.sysbehavior.platform.service;
 
-import com.platform.connectivity.mysql.MySqlConnectionManager;
-import com.platform.connectivity.redis.RedisConnectionManager;
-import com.platform.connectivity.kafka.KafkaConnectionManager;
+import com.sysbehavior.platform.connectivity.mysql.MySqlConnectionManager;
+import com.sysbehavior.platform.connectivity.redis.RedisConnectionManager;
+import com.sysbehavior.platform.connectivity.kafka.KafkaConnectionManager;
 import com.sysbehavior.platform.domain.ConnectivityEvent;
 import com.sysbehavior.platform.events.KafkaEventProducer;
 import io.micrometer.core.instrument.MeterRegistry;
