@@ -213,9 +213,9 @@ if [ -f "docker-compose.no-deps.yml" ]; then
     
     # Wait for app with custom check (different container name)
     echo -e "${BLUE}Waiting for app to start (no-deps mode)...${NC}"
-    local max_attempts=60
-    local attempt=0
-    local app_started=false
+    max_attempts=60
+    attempt=0
+    app_started=false
     
     while [ $attempt -lt $max_attempts ]; do
         if curl -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
@@ -229,7 +229,7 @@ if [ -f "docker-compose.no-deps.yml" ]; then
     done
     echo ""
     
-    if [ "$app_started" = true ]; then
+    if [ "$app_started" = "true" ]; then
         sleep 15
         
         response=$(curl -s http://localhost:8080/internal/connectivity)
