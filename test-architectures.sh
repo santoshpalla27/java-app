@@ -74,7 +74,7 @@ run_test() {
     
     # Start services
     echo "Starting services with $compose_file..."
-    docker-compose -f $compose_file up -d --build
+    docker compose  -f $compose_file up -d --build
     
     # Wait for app
     if wait_for_app; then
@@ -97,27 +97,27 @@ run_test() {
     
     # Cleanup
     echo "Cleaning up..."
-    docker-compose -f $compose_file down -v > /dev/null 2>&1
+    docker compose  -f $compose_file down -v > /dev/null 2>&1
     sleep 5
 }
 
 # Test 1: Standard Local Setup
 run_test "Standard Local Setup" \
-    "docker-compose.yml" \
+    "docker compose.yml" \
     "CONNECTED" \
     "CONNECTED" \
     "CONNECTED"
 
 # Test 2: MySQL High Availability
 run_test "MySQL High Availability" \
-    "docker-compose.mysql-ha.yml" \
+    "docker compose.mysql-ha.yml" \
     "CONNECTED" \
     "CONNECTED" \
     "CONNECTED"
 
 # Test 3: Kafka Multi-Broker
 run_test "Kafka Multi-Broker Cluster" \
-    "docker-compose.kafka-cluster.yml" \
+    "docker compose.kafka-cluster.yml" \
     "CONNECTED" \
     "CONNECTED" \
     "CONNECTED"
@@ -128,7 +128,7 @@ echo "======================================"
 echo "Test: No Dependencies (Resilience)"
 echo "======================================"
 echo "Starting backend with no dependencies..."
-docker-compose -f docker-compose.no-deps.yml up -d --build
+docker compose  -f docker-compose.no-deps.yml up -d --build
 
 if wait_for_app; then
     sleep 10
@@ -157,7 +157,7 @@ else
     ((FAILED++))
 fi
 
-docker-compose -f docker-compose.no-deps.yml down -v > /dev/null 2>&1
+docker compose  -f docker-compose.no-deps.yml down -v > /dev/null 2>&1
 
 # Print summary
 echo ""
