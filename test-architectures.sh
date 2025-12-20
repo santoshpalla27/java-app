@@ -211,7 +211,25 @@ if [ -f "docker-compose.no-deps.yml" ]; then
     echo "Starting backend with no dependencies..."
     docker compose -f docker-compose.no-deps.yml up -d --build
     
-    if wait_for_app; then
+    # Wait for app with custom check (different container name)
+    echo -e "${BLUE}Waiting for app to start (no-deps mode)...${NC}"
+    local max_attempts=60
+    local attempt=0
+    local app_started=false
+    
+    while [ $attempt -lt $max_attempts ]; do
+        if curl -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+            echo -e "${GREEN}App is up!${NC}"
+            app_started=true
+            break
+        fi
+        ((attempt++))
+        echo -n "."
+        sleep 2
+    done
+    echo ""
+    
+    if [ "$app_started" = true ]; then
         sleep 15
         
         response=$(curl -s http://localhost:8080/internal/connectivity)
@@ -235,6 +253,8 @@ if [ -f "docker-compose.no-deps.yml" ]; then
         fi
     else
         echo -e "${RED}✗ FAILED${NC}: No Dependencies - App failed to start"
+        echo "Showing backend logs:"
+        docker logs sys-backend-no-deps --tail 50
         ((FAILED++))
     fi
     
