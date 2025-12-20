@@ -3,7 +3,7 @@
 # Architecture Testing Script
 # Tests connection blueprints against different infrastructure configurations
 
-set -e
+# Note: Not using 'set -e' to ensure all tests run even if one fails
 
 echo "======================================"
 echo "Connection Blueprint Architecture Tests"
@@ -124,44 +124,46 @@ run_test() {
     if ! docker compose -f $compose_file up -d --build; then
         echo -e "${RED}✗ FAILED${NC}: $test_name - Failed to start containers"
         ((FAILED++))
-        return 1
-    fi
-    
-    # Show running containers
-    echo "Running containers:"
-    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-    
-    # Wait for app
-    if wait_for_app; then
-        # Give it more time for health checks to stabilize
-        echo "Waiting for health checks to stabilize..."
-        sleep 20
-        
-        # Check connectivity
-        echo -e "${BLUE}Checking connectivity states...${NC}"
-        if check_connectivity "$expected_mysql" "$expected_redis" "$expected_kafka"; then
-            echo -e "${GREEN}✓ PASSED${NC}: $test_name"
-            ((PASSED++))
-        else
-            echo -e "${RED}✗ FAILED${NC}: $test_name - States don't match expected"
-            ((FAILED++))
-            
-            # Show logs for debugging
-            echo "Backend logs:"
-            docker logs sys-backend --tail 100
-        fi
     else
-        echo -e "${RED}✗ FAILED${NC}: $test_name - App failed to start"
-        ((FAILED++))
+        # Show running containers
+        echo "Running containers:"
+        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        
+        # Wait for app
+        if wait_for_app; then
+            # Give it more time for health checks to stabilize
+            echo "Waiting for health checks to stabilize..."
+            sleep 20
+            
+            # Check connectivity
+            echo -e "${BLUE}Checking connectivity states...${NC}"
+            if check_connectivity "$expected_mysql" "$expected_redis" "$expected_kafka"; then
+                echo -e "${GREEN}✓ PASSED${NC}: $test_name"
+                ((PASSED++))
+            else
+                echo -e "${RED}✗ FAILED${NC}: $test_name - States don't match expected"
+                ((FAILED++))
+                
+                # Show logs for debugging
+                echo "Backend logs:"
+                docker logs sys-backend --tail 100
+            fi
+        else
+            echo -e "${RED}✗ FAILED${NC}: $test_name - App failed to start"
+            ((FAILED++))
+        fi
     fi
     
-    # Cleanup
+    # Cleanup (always runs regardless of test result)
     echo -e "${YELLOW}Cleaning up test environment...${NC}"
     docker compose -f $compose_file down -v
     
     # Wait for complete cleanup
     echo "Waiting for cleanup to complete..."
     sleep 10
+    
+    echo -e "${BLUE}Test completed. Moving to next test...${NC}"
+    echo ""
 }
 
 # Initial cleanup
