@@ -69,6 +69,7 @@ public class SecurityConfig {
                 auth.requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers("/internal/**").permitAll() // Internal monitoring endpoints
+                    .requestMatchers("/metrics").permitAll() // Metrics alias for /actuator/prometheus
                     .requestMatchers("/ws/**").permitAll() // WebSocket Setup info
                     .anyRequest().authenticated()
             );
