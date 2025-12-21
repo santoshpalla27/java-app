@@ -42,7 +42,9 @@ public class MetricsAliasController {
     public ResponseEntity<String> metrics(HttpServletRequest request) {
         // Delegate to the actual Prometheus endpoint
         // Spring Boot 3 requires TextOutputFormat and includedNames parameters
-        String metricsOutput = prometheusScrapeEndpoint.scrape(TextOutputFormat.CONTENT_TYPE_004, Collections.emptySet());
+        // The scrape() method returns WebEndpointResponse<String>, so we extract the body
+        var response = prometheusScrapeEndpoint.scrape(TextOutputFormat.CONTENT_TYPE_004, Collections.emptySet());
+        String metricsOutput = response.getBody();
         
         // Return with proper Prometheus content type
         return ResponseEntity.ok()
