@@ -3,6 +3,7 @@ package com.sysbehavior.platform.connectivity.redis;
 import com.sysbehavior.platform.connectivity.core.ConnectionState;
 import com.sysbehavior.platform.connectivity.core.ConnectivityRegistry;
 import com.sysbehavior.platform.connectivity.core.DependencyType;
+import com.sysbehavior.platform.connectivity.metrics.ConnectivityMetricsService;
 import io.lettuce.core.event.connection.*;
 import io.lettuce.core.event.Event;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ public class RedisConnectionManager {
     
     private final ConnectivityRegistry registry;
     private final RedisConnectionFactory connectionFactory;
+    private final ConnectivityMetricsService metricsService;
     
     @Value("${app.redis.mode:standalone}")
     private String redisMode;
@@ -53,9 +55,11 @@ public class RedisConnectionManager {
     @Autowired
     public RedisConnectionManager(
             ConnectivityRegistry registry,
-            RedisConnectionFactory connectionFactory) {
+            RedisConnectionFactory connectionFactory,
+            ConnectivityMetricsService metricsService) {
         this.registry = registry;
         this.connectionFactory = connectionFactory;
+        this.metricsService = metricsService;
         log.info("RedisConnectionManager initialized");
     }
     
@@ -140,6 +144,9 @@ public class RedisConnectionManager {
      */
     private void handleFailure(String errorMessage) {
         consecutiveFailures++;
+        
+        // Increment retry counter for Prometheus
+        metricsService.incrementRetry(DependencyType.REDIS);
         
         ConnectionState newState;
         if (consecutiveFailures >= FAILED_THRESHOLD) {

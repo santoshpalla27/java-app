@@ -3,6 +3,7 @@ package com.sysbehavior.platform.connectivity.kafka;
 import com.sysbehavior.platform.connectivity.core.ConnectionState;
 import com.sysbehavior.platform.connectivity.core.ConnectivityRegistry;
 import com.sysbehavior.platform.connectivity.core.DependencyType;
+import com.sysbehavior.platform.connectivity.metrics.ConnectivityMetricsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
@@ -39,6 +40,7 @@ public class KafkaConnectionManager {
     
     private final ConnectivityRegistry registry;
     private final KafkaAdmin kafkaAdmin;
+    private final ConnectivityMetricsService metricsService;
     
     // Track send failures and rebalances
     private final AtomicInteger consecutiveFailures = new AtomicInteger(0);
@@ -51,9 +53,11 @@ public class KafkaConnectionManager {
     private static final int REBALANCE_STORM_THRESHOLD = 5; // 5 rebalances in short time = DEGRADED
     
     @Autowired
-    public KafkaConnectionManager(ConnectivityRegistry registry, KafkaAdmin kafkaAdmin) {
+    public KafkaConnectionManager(ConnectivityRegistry registry, KafkaAdmin kafkaAdmin,
+                                   ConnectivityMetricsService metricsService) {
         this.registry = registry;
         this.kafkaAdmin = kafkaAdmin;
+        this.metricsService = metricsService;
         log.info("KafkaConnectionManager initialized");
     }
     
@@ -117,6 +121,9 @@ public class KafkaConnectionManager {
      */
     private void handleFailure(String errorMessage) {
         int failures = consecutiveFailures.incrementAndGet();
+        
+        // Increment retry counter for Prometheus
+        metricsService.incrementRetry(DependencyType.KAFKA);
         
         ConnectionState newState;
         if (failures >= FAILED_THRESHOLD) {

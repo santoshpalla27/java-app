@@ -1,6 +1,8 @@
 package com.sysbehavior.platform.connectivity.core;
 
+import com.sysbehavior.platform.connectivity.metrics.ConnectivityMetricsService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -29,11 +31,14 @@ public class ConnectivityRegistry {
      * Value: DependencyState (internal mutable state holder)
      */
     private final Map<DependencyType, DependencyState> states = new ConcurrentHashMap<>();
+    private final ConnectivityMetricsService metricsService;
     
     /**
      * Initialize registry with all dependencies in DISCONNECTED state.
      */
-    public ConnectivityRegistry() {
+    @Autowired
+    public ConnectivityRegistry(ConnectivityMetricsService metricsService) {
+        this.metricsService = metricsService;
         for (DependencyType type : DependencyType.values()) {
             states.put(type, new DependencyState(type));
         }
@@ -61,6 +66,14 @@ public class ConnectivityRegistry {
             if (oldState != newState) {
                 log.info("Dependency {} state transition: {} → {}", type, oldState, newState);
                 depState.state.set(newState);
+                
+                // Update Prometheus metrics
+                metricsService.updateState(type, newState);
+                
+                // Increment failure counter if transitioning to FAILED
+                if (newState == ConnectionState.FAILED) {
+                    metricsService.incrementFailure(type);
+                }
                 
                 // Update timestamps based on new state
                 if (newState == ConnectionState.CONNECTED) {

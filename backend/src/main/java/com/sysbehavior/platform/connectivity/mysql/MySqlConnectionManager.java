@@ -3,6 +3,7 @@ package com.sysbehavior.platform.connectivity.mysql;
 import com.sysbehavior.platform.connectivity.core.ConnectionState;
 import com.sysbehavior.platform.connectivity.core.ConnectivityRegistry;
 import com.sysbehavior.platform.connectivity.core.DependencyType;
+import com.sysbehavior.platform.connectivity.metrics.ConnectivityMetricsService;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class MySqlConnectionManager {
     
     private final ConnectivityRegistry registry;
     private final DataSource dataSource;
+    private final ConnectivityMetricsService metricsService;
     
     // Track consecutive failures to distinguish transient errors from persistent failures
     private int consecutiveFailures = 0;
@@ -42,9 +44,11 @@ public class MySqlConnectionManager {
     private static final int FAILED_THRESHOLD = 5;   // 5 failures = FAILED
     
     @Autowired
-    public MySqlConnectionManager(ConnectivityRegistry registry, DataSource dataSource) {
+    public MySqlConnectionManager(ConnectivityRegistry registry, DataSource dataSource,
+                                   ConnectivityMetricsService metricsService) {
         this.registry = registry;
         this.dataSource = dataSource;
+        this.metricsService = metricsService;
         log.info("MySqlConnectionManager initialized");
     }
     
@@ -104,6 +108,9 @@ public class MySqlConnectionManager {
      */
     private void handleFailure(String errorMessage) {
         consecutiveFailures++;
+        
+        // Increment retry counter for Prometheus
+        metricsService.incrementRetry(DependencyType.MYSQL);
         
         ConnectionState newState;
         if (consecutiveFailures >= FAILED_THRESHOLD) {
