@@ -3,10 +3,13 @@ package com.sysbehavior.platform.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.metrics.export.prometheus.PrometheusScrapeEndpoint;
+import org.springframework.boot.actuate.metrics.export.prometheus.TextOutputFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collections;
 
 /**
  * Controller to expose /metrics as an alias for /actuator/prometheus.
@@ -38,7 +41,8 @@ public class MetricsAliasController {
     @GetMapping(value = "/metrics", produces = "text/plain; version=0.0.4; charset=utf-8")
     public ResponseEntity<String> metrics(HttpServletRequest request) {
         // Delegate to the actual Prometheus endpoint
-        String metricsOutput = prometheusScrapeEndpoint.scrape();
+        // Spring Boot 3 requires TextOutputFormat and includedNames parameters
+        String metricsOutput = prometheusScrapeEndpoint.scrape(TextOutputFormat.CONTENT_TYPE_004, Collections.emptySet());
         
         // Return with proper Prometheus content type
         return ResponseEntity.ok()
