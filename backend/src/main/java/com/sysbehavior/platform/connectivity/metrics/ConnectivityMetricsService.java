@@ -145,6 +145,7 @@ public class ConnectivityMetricsService {
             case CONNECTED -> 1.0;
             case DEGRADED -> 0.5;
             case RETRYING, FAILED, DISCONNECTED -> 0.0;
+            default -> 0.0;
         };
     }
 }
