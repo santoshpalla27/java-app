@@ -120,8 +120,7 @@ public class ConnectivityRegistry {
         if (depState != null && errorMessage != null && !errorMessage.equals(depState.lastFailureMessage.get())) {
             // Same state but new error message (e.g., DEGRADED with different errors)
             depState.lastFailureMessage.set(errorMessage);
-                depState.lastFailureTime.set(Instant.now());
-            }
+            depState.lastFailureTime.set(Instant.now());
         }
     }
     
