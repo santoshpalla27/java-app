@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- OpenTelemetry Appender for log export -->
-    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
-        <captureExperimentalAttributes>true</captureExperimentalAttributes>
-        <captureKeyValuePairAttributes>true</captureKeyValuePairAttributes>
-    </appender>
+    <!-- 
+    SRE-GRADE LOGGING CONFIGURATION
+    
+    WHY this approach:
+    - Single log path: Console → Docker stdout → Filebeat → Elasticsearch
+    - Structured JSON with trace correlation (trace_id, span_id)
+    - Industry standard: Filebeat is battle-tested for log collection
+    - Simpler than OpenTelemetry Logback appender (which has compatibility issues)
+    -->
     
     <!-- Console appender with structured JSON logging -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -18,7 +22,6 @@
     
     <!-- Root logger configuration -->
     <root level="INFO">
-        <appender-ref ref="OTEL"/>
         <appender-ref ref="CONSOLE"/>
     </root>
     
