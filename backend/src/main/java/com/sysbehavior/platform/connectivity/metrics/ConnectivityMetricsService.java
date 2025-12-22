@@ -2,10 +2,12 @@ package com.sysbehavior.platform.connectivity.metrics;
 
 import com.sysbehavior.platform.connectivity.core.ConnectionState;
 import com.sysbehavior.platform.connectivity.core.DependencyType;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.DoubleHistogram;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.Meter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,76 +19,77 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Service for managing Prometheus metrics related to dependency connectivity.
+ * Service for managing OpenTelemetry metrics related to dependency connectivity.
  * 
  * Exposes:
- * - dependency_state{type} - Gauge (CONNECTED=1, DEGRADED=0.5, FAILED=0)
- * - dependency_retries_total{type} - Counter
- * - dependency_failures_total{type} - Counter
- * - dependency_recovery_seconds{type} - Timer
+ * - dependency.state{type} - Gauge (CONNECTED=1, DEGRADED=0.5, FAILED=0)
+ * - dependency.retries{type} - Counter
+ * - dependency.failures{type} - Counter
+ * - dependency.recovery.duration{type} - Histogram
  */
 @Service
 public class ConnectivityMetricsService {
     
     private static final Logger log = LoggerFactory.getLogger(ConnectivityMetricsService.class);
     
-    private final MeterRegistry meterRegistry;
+    private final Meter meter;
     
-    // State gauges for each dependency
+    // State values for each dependency (for gauge callbacks)
     private final Map<DependencyType, AtomicReference<Double>> stateValues = new ConcurrentHashMap<>();
     
     // Retry counters
-    private final Map<DependencyType, Counter> retryCounters = new ConcurrentHashMap<>();
+    private final Map<DependencyType, LongCounter> retryCounters = new ConcurrentHashMap<>();
     
     // Failure counters
-    private final Map<DependencyType, Counter> failureCounters = new ConcurrentHashMap<>();
+    private final Map<DependencyType, LongCounter> failureCounters = new ConcurrentHashMap<>();
     
-    // Recovery timers
-    private final Map<DependencyType, Timer> recoveryTimers = new ConcurrentHashMap<>();
+    // Recovery histograms
+    private final Map<DependencyType, DoubleHistogram> recoveryHistograms = new ConcurrentHashMap<>();
     
     // Track failure start times for recovery duration calculation
     private final Map<DependencyType, Instant> failureStartTimes = new ConcurrentHashMap<>();
     
-    public ConnectivityMetricsService(MeterRegistry meterRegistry) {
-        this.meterRegistry = meterRegistry;
+    public ConnectivityMetricsService(OpenTelemetry openTelemetry) {
+        this.meter = openTelemetry.getMeter("connectivity");
         initializeMetrics();
     }
     
     private void initializeMetrics() {
         for (DependencyType type : DependencyType.values()) {
             String typeName = type.name().toLowerCase();
+            Attributes attributes = Attributes.of(AttributeKey.stringKey("type"), typeName);
             
-            // Initialize state gauge
+            // Initialize state value
             AtomicReference<Double> stateValue = new AtomicReference<>(0.0);
             stateValues.put(type, stateValue);
             
-            Gauge.builder("dependency_state", stateValue, AtomicReference::get)
-                    .tag("type", typeName)
-                    .description("Current state of dependency (CONNECTED=1, DEGRADED=0.5, FAILED=0)")
-                    .register(meterRegistry);
+            // Register state gauge with callback
+            meter.gaugeBuilder("dependency.state")
+                .setDescription("Current state of dependency (CONNECTED=1, DEGRADED=0.5, FAILED=0)")
+                .buildWithCallback(measurement -> {
+                    measurement.record(stateValue.get(), attributes);
+                });
             
             // Initialize retry counter
-            Counter retryCounter = Counter.builder("dependency_retries_total")
-                    .tag("type", typeName)
-                    .description("Total number of retry attempts for dependency")
-                    .register(meterRegistry);
+            LongCounter retryCounter = meter.counterBuilder("dependency.retries")
+                .setDescription("Total number of retry attempts for dependency")
+                .build();
             retryCounters.put(type, retryCounter);
             
             // Initialize failure counter
-            Counter failureCounter = Counter.builder("dependency_failures_total")
-                    .tag("type", typeName)
-                    .description("Total number of failures for dependency")
-                    .register(meterRegistry);
+            LongCounter failureCounter = meter.counterBuilder("dependency.failures")
+                .setDescription("Total number of failures for dependency")
+                .build();
             failureCounters.put(type, failureCounter);
             
-            // Initialize recovery timer
-            Timer recoveryTimer = Timer.builder("dependency_recovery_seconds")
-                    .tag("type", typeName)
-                    .description("Time taken to recover from failure to connected state")
-                    .register(meterRegistry);
-            recoveryTimers.put(type, recoveryTimer);
+            // Initialize recovery histogram
+            DoubleHistogram recoveryHistogram = meter.histogramBuilder("dependency.recovery.duration")
+                .setDescription("Time taken to recover from failure to connected state")
+                .setUnit("s")
+                .build();
+            recoveryHistograms.put(type, recoveryHistogram);
             
-            log.info("Initialized metrics for dependency type: {}", typeName);
+            log.info("Initialized OpenTelemetry metrics for dependency type: {}", typeName);
         }
     }
     
@@ -109,7 +112,10 @@ public class ConnectivityMetricsService {
         if (state == ConnectionState.CONNECTED && failureStartTimes.containsKey(type)) {
             Instant failureStart = failureStartTimes.remove(type);
             Duration recoveryDuration = Duration.between(failureStart, Instant.now());
-            recoveryTimers.get(type).record(recoveryDuration);
+            
+            Attributes attributes = Attributes.of(AttributeKey.stringKey("type"), type.name().toLowerCase());
+            recoveryHistograms.get(type).record(recoveryDuration.toMillis() / 1000.0, attributes);
+            
             log.info("Recorded recovery time for {}: {} seconds", type, recoveryDuration.getSeconds());
         }
     }
@@ -120,7 +126,8 @@ public class ConnectivityMetricsService {
      * @param type Dependency type
      */
     public void incrementRetry(DependencyType type) {
-        retryCounters.get(type).increment();
+        Attributes attributes = Attributes.of(AttributeKey.stringKey("type"), type.name().toLowerCase());
+        retryCounters.get(type).add(1, attributes);
     }
     
     /**
@@ -130,7 +137,8 @@ public class ConnectivityMetricsService {
      * @param type Dependency type
      */
     public void incrementFailure(DependencyType type) {
-        failureCounters.get(type).increment();
+        Attributes attributes = Attributes.of(AttributeKey.stringKey("type"), type.name().toLowerCase());
+        failureCounters.get(type).add(1, attributes);
         log.warn("Failure count incremented for {}", type);
     }
     

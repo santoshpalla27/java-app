@@ -1,6 +1,11 @@
 package com.sysbehavior.platform.connectivity.core;
 
 import com.sysbehavior.platform.connectivity.metrics.ConnectivityMetricsService;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,13 +37,15 @@ public class ConnectivityRegistry {
      */
     private final Map<DependencyType, DependencyState> states = new ConcurrentHashMap<>();
     private final ConnectivityMetricsService metricsService;
+    private final Tracer tracer;
     
     /**
      * Initialize registry with all dependencies in DISCONNECTED state.
      */
     @Autowired
-    public ConnectivityRegistry(ConnectivityMetricsService metricsService) {
+    public ConnectivityRegistry(ConnectivityMetricsService metricsService, OpenTelemetry openTelemetry) {
         this.metricsService = metricsService;
+        this.tracer = openTelemetry.getTracer("connectivity-registry");
         for (DependencyType type : DependencyType.values()) {
             states.put(type, new DependencyState(type));
         }
@@ -53,41 +60,66 @@ public class ConnectivityRegistry {
      * @param errorMessage Optional error message (null if no error)
      */
     public void updateState(DependencyType type, ConnectionState newState, String errorMessage) {
-        DependencyState depState = states.get(type);
-        if (depState == null) {
-            log.warn("Attempted to update state for unknown dependency: {}", type);
-            return;
+        Span span = tracer.spanBuilder("connectivity.state.update")
+            .setAttribute("dependency.type", type.name())
+            .setAttribute("state.new", newState.name())
+            .startSpan();
+        
+        try (Scope scope = span.makeCurrent()) {
+            DependencyState depState = states.get(type);
+            if (depState == null) {
+                log.warn("Attempted to update state for unknown dependency: {}", type);
+                span.setStatus(StatusCode.ERROR, "Unknown dependency type");
+                return;
+            }
+            
+            synchronized (depState) {
+                ConnectionState oldState = depState.state.get();
+                span.setAttribute("state.old", oldState.name());
+                
+                // Only log if state actually changed
+                if (oldState != newState) {
+                    log.info("Dependency {} state transition: {} → {}", type, oldState, newState);
+                    depState.state.set(newState);
+                    
+                    // Update Prometheus metrics
+                    metricsService.updateState(type, newState);
+                    
+                    // Increment failure counter if transitioning to FAILED
+                    if (newState == ConnectionState.FAILED) {
+                        metricsService.incrementFailure(type);
+                        span.setStatus(StatusCode.ERROR, errorMessage != null ? errorMessage : "Dependency failed");
+                        if (errorMessage != null) {
+                            span.recordException(new RuntimeException(errorMessage));
+                        }
+                    }
+                    
+                    // Update timestamps based on new state
+                    if (newState == ConnectionState.CONNECTED) {
+                        depState.connectedSince.set(Instant.now());
+                        depState.retryCount.set(0); // Reset retry count on successful connection
+                        depState.lastFailureMessage.set(null); // Clear error on success
+                        span.addEvent("dependency.connected");
+                    } else if (newState == ConnectionState.FAILED || newState == ConnectionState.RETRYING) {
+                        depState.lastFailureTime.set(Instant.now());
+                        depState.lastFailureMessage.set(errorMessage);
+                        depState.retryCount.incrementAndGet();
+                        span.addEvent("dependency.failed", io.opentelemetry.api.common.Attributes.of(
+                            io.opentelemetry.api.common.AttributeKey.stringKey("error.message"), 
+                            errorMessage != null ? errorMessage : "Unknown error"
+                        ));
+                    }
+                }
+            }
+        } finally {
+            span.end();
         }
         
-        synchronized (depState) {
-            ConnectionState oldState = depState.state.get();
-            
-            // Only log if state actually changed
-            if (oldState != newState) {
-                log.info("Dependency {} state transition: {} → {}", type, oldState, newState);
-                depState.state.set(newState);
-                
-                // Update Prometheus metrics
-                metricsService.updateState(type, newState);
-                
-                // Increment failure counter if transitioning to FAILED
-                if (newState == ConnectionState.FAILED) {
-                    metricsService.incrementFailure(type);
-                }
-                
-                // Update timestamps based on new state
-                if (newState == ConnectionState.CONNECTED) {
-                    depState.connectedSince.set(Instant.now());
-                    depState.retryCount.set(0); // Reset retry count on successful connection
-                    depState.lastFailureMessage.set(null); // Clear error on success
-                } else if (newState == ConnectionState.FAILED || newState == ConnectionState.RETRYING) {
-                    depState.lastFailureTime.set(Instant.now());
-                    depState.lastFailureMessage.set(errorMessage);
-                    depState.retryCount.incrementAndGet();
-                }
-            } else if (errorMessage != null && !errorMessage.equals(depState.lastFailureMessage.get())) {
-                // Same state but new error message (e.g., DEGRADED with different errors)
-                depState.lastFailureMessage.set(errorMessage);
+        // Handle same state but new error message (outside span)
+        DependencyState depState = states.get(type);
+        if (depState != null && errorMessage != null && !errorMessage.equals(depState.lastFailureMessage.get())) {
+            // Same state but new error message (e.g., DEGRADED with different errors)
+            depState.lastFailureMessage.set(errorMessage);
                 depState.lastFailureTime.set(Instant.now());
             }
         }
