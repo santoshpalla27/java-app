@@ -74,6 +74,22 @@ app:
       multiplier: 2.0
       max-attempts: -1 # Infinite retry
 
+# OpenTelemetry Configuration
+otel:
+  exporter:
+    otlp:
+      endpoint: http://otel-collector:4317
+  service:
+    name: ${spring.application.name}
+    version: 1.0.0
+  deployment:
+    environment: production
+  traces:
+    sampler: always_on
+  metrics:
+    export:
+      interval: 15000
+
 management:
   endpoints:
     web:

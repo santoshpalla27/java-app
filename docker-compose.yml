@@ -173,6 +173,81 @@ services:
       - prometheus
     restart: unless-stopped
 
+  # ==========================================
+  # OPENTELEMETRY COLLECTOR
+  # ==========================================
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.91.0
+    container_name: sys-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./monitoring/otel-collector/config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics (self-monitoring)
+      - "8889:8889"   # Prometheus exporter
+    networks:
+      - sys-net
+    restart: unless-stopped
+
+  # ==========================================
+  # TEMPO (Distributed Tracing)
+  # ==========================================
+  tempo:
+    image: grafana/tempo:2.3.1
+    container_name: sys-tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./monitoring/tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/tmp/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP
+      - "4317"        # OTLP gRPC (internal)
+    networks:
+      - sys-net
+    restart: unless-stopped
+
+  # ==========================================
+  # ELASTICSEARCH (Log Storage)
+  # ==========================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: sys-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - sys-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ==========================================
+  # KIBANA (Log Search UI)
+  # ==========================================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: sys-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=kibana
+    ports:
+      - "5601:5601"
+    networks:
+      - sys-net
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
 networks:
   sys-net:
     driver: bridge
@@ -181,3 +256,5 @@ volumes:
   mysql_data:
   redis_data:
   kafka_data:
+  tempo_data:
+  es_data:

@@ -1,9 +1,14 @@
 global:
-  scrape_interval: 5s
-  evaluation_interval: 5s
+  scrape_interval: 15s
+  evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'system-backend'
-    metrics_path: '/metrics'
+  # Scrape metrics from OpenTelemetry Collector's Prometheus exporter
+  - job_name: 'otel-collector'
     static_configs:
-      - targets: ['backend:8080']
+      - targets: ['otel-collector:8889']
+    
+  # Scrape OTel Collector's own metrics (self-monitoring)
+  - job_name: 'otel-collector-internal'
+    static_configs:
+      - targets: ['otel-collector:8888']
