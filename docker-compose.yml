@@ -251,23 +251,21 @@ services:
     restart: unless-stopped
 
   # ==========================================
-  # FILEBEAT (Log Collection)
+  # FLUENT BIT (Log Collection - Cloud Native)
   # ==========================================
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:8.11.0
-    container_name: sys-filebeat
+  fluent-bit:
+    image: fluent/fluent-bit:2.2
+    container_name: sys-fluent-bit
     user: root
     volumes:
-      - ./monitoring/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./monitoring/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./monitoring/fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - filebeat_data:/usr/share/filebeat/data
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     networks:
       - sys-net
     depends_on:
-      - elasticsearch
+      - otel-collector
       - backend
     restart: unless-stopped
 
@@ -281,4 +279,4 @@ volumes:
   kafka_data:
   tempo_data:
   es_data:
-  filebeat_data:
+  prometheus_data:
