@@ -100,7 +100,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "dependency_state{type=\"mysql\"}",
+                    "expr": "otel_dependency_state{type=\"mysql\"}",
                     "refId": "A"
                 }
             ],
@@ -185,7 +185,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "dependency_state{type=\"redis\"}",
+                    "expr": "otel_dependency_state{type=\"redis\"}",
                     "refId": "A"
                 }
             ],
@@ -270,7 +270,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "dependency_state{type=\"kafka\"}",
+                    "expr": "otel_dependency_state{type=\"kafka\"}",
                     "refId": "A"
                 }
             ],
@@ -357,7 +357,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(dependency_retries_total{type=\"mysql\"}[1m])",
+                    "expr": "rate(otel_dependency_retries{type=\"mysql\"}[1m])",
                     "legendFormat": "MySQL Retries",
                     "refId": "A"
                 },
@@ -366,7 +366,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(dependency_retries_total{type=\"redis\"}[1m])",
+                    "expr": "rate(otel_dependency_retries{type=\"redis\"}[1m])",
                     "legendFormat": "Redis Retries",
                     "refId": "B"
                 },
@@ -375,7 +375,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(dependency_retries_total{type=\"kafka\"}[1m])",
+                    "expr": "rate(otel_dependency_retries{type=\"kafka\"}[1m])",
                     "legendFormat": "Kafka Retries",
                     "refId": "C"
                 }
@@ -443,7 +443,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "dependency_failures_total{type=\"mysql\"}",
+                    "expr": "otel_dependency_failures{type=\"mysql\"}",
                     "legendFormat": "MySQL Failures",
                     "refId": "A"
                 },
@@ -452,7 +452,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "dependency_failures_total{type=\"redis\"}",
+                    "expr": "otel_dependency_failures{type=\"redis\"}",
                     "legendFormat": "Redis Failures",
                     "refId": "B"
                 },
@@ -461,7 +461,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "dependency_failures_total{type=\"kafka\"}",
+                    "expr": "otel_dependency_failures{type=\"kafka\"}",
                     "legendFormat": "Kafka Failures",
                     "refId": "C"
                 }
@@ -549,7 +549,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "histogram_quantile(0.95, sum(rate(dependency_recovery_seconds_bucket[5m])) by (le, type))",
+                    "expr": "histogram_quantile(0.95, sum(rate(otel_dependency_recovery_duration_bucket[5m])) by (le, type))",
                     "legendFormat": "{{type}} P95",
                     "refId": "A"
                 },
@@ -558,7 +558,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "histogram_quantile(0.50, sum(rate(dependency_recovery_seconds_bucket[5m])) by (le, type))",
+                    "expr": "histogram_quantile(0.50, sum(rate(otel_dependency_recovery_duration_bucket[5m])) by (le, type))",
                     "legendFormat": "{{type}} P50",
                     "refId": "B"
                 }
@@ -853,4 +853,5 @@
     "version": 1,
     "weekStart": ""
 }
+
 
