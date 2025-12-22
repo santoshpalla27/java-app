@@ -1,0 +1,62 @@
+groups:
+  - name: dependency_health
+    interval: 30s
+    rules:
+      # CRITICAL: Dependency is DOWN
+      # WHY: System cannot function without critical dependencies
+      # ACTIONABLE: Check dependency logs, verify network connectivity
+      - alert: DependencyDown
+        expr: dependency_state == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: dependency
+        annotations:
+          summary: "Dependency {{ $labels.dependency }} is DOWN"
+          description: "{{ $labels.dependency }} has been in DOWN state for more than 1 minute. Current value: {{ $value }}"
+          runbook: "Check `docker logs sys-{{ $labels.dependency }}` and verify network connectivity"
+      
+      # WARNING: High retry rate indicates instability
+      # WHY: Leading indicator of impending failure
+      # ACTIONABLE: Investigate dependency health before it fails
+      - alert: RetryStorm
+        expr: rate(dependency_retry_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          component: dependency
+        annotations:
+          summary: "High retry rate for {{ $labels.dependency }}"
+          description: "{{ $labels.dependency }} is experiencing {{ $value }} retries/sec over 5min. This indicates connection instability."
+          runbook: "Check dependency latency and error logs. May need to scale or restart dependency."
+      
+      # WARNING: High latency is a leading indicator
+      # WHY: Degraded performance before complete failure
+      # ACTIONABLE: Investigate before users are impacted
+      - alert: DependencyHighLatency
+        expr: dependency_latency_ms > 1000
+        for: 3m
+        labels:
+          severity: warning
+          component: dependency
+        annotations:
+          summary: "High latency for {{ $labels.dependency }}"
+          description: "{{ $labels.dependency }} latency is {{ $value }}ms (threshold: 1000ms)"
+          runbook: "Check dependency resource usage (CPU, memory, connections). May need to scale."
+
+  - name: system_health
+    interval: 30s
+    rules:
+      # CRITICAL: Multiple dependencies down
+      # WHY: System is likely unusable
+      # ACTIONABLE: Emergency response required
+      - alert: SystemDegraded
+        expr: sum(dependency_state) < 2
+        for: 1m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "System is degraded - multiple dependencies down"
+          description: "Only {{ $value }} out of 3 dependencies are UP. System may be unusable."
+          runbook: "Check all dependency health. This is a system-wide issue."
