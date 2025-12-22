@@ -646,7 +646,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+                    "expr": "otel_jvm_memory_committed_bytes{area=\"heap\"}",
                     "legendFormat": "Heap Used",
                     "refId": "A"
                 }
@@ -734,7 +734,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(jvm_gc_pause_seconds_sum[1m])",
+                    "expr": "rate(otel_jvm_gc_pause_milliseconds_sum[1m])",
                     "legendFormat": "GC Pause Time",
                     "refId": "A"
                 }
@@ -822,7 +822,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "jvm_threads_live",
+                    "expr": "otel_jvm_threads_live_live",
                     "legendFormat": "Live Threads",
                     "refId": "A"
                 }
@@ -853,5 +853,6 @@
     "version": 1,
     "weekStart": ""
 }
+
 
 
