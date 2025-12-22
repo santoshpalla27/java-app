@@ -248,6 +248,27 @@ services:
       - elasticsearch
     restart: unless-stopped
 
+  # ==========================================
+  # FILEBEAT (Log Collection)
+  # ==========================================
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: sys-filebeat
+    user: root
+    volumes:
+      - ./monitoring/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - filebeat_data:/usr/share/filebeat/data
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - sys-net
+    depends_on:
+      - elasticsearch
+      - backend
+    restart: unless-stopped
+
 networks:
   sys-net:
     driver: bridge
@@ -258,3 +279,4 @@ volumes:
   kafka_data:
   tempo_data:
   es_data:
+  filebeat_data:
