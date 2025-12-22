@@ -88,14 +88,6 @@ public class ConnectivityRegistry {
                 }
             }
         }
-        
-        // Handle same state but new error message (outside span)
-        DependencyState depState = states.get(type);
-        if (depState != null && errorMessage != null && !errorMessage.equals(depState.lastFailureMessage.get())) {
-            // Same state but new error message (e.g., DEGRADED with different errors)
-            depState.lastFailureMessage.set(errorMessage);
-            depState.lastFailureTime.set(Instant.now());
-        }
     }
     
     /**
