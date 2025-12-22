@@ -109,11 +109,14 @@ public class RedisConnectionManager {
      */
     @Scheduled(fixedDelay = 5000, initialDelay = 10000)
     public void checkHealth() {
+        long startTime = System.currentTimeMillis();
         try {
             // Get a connection and execute PING
             connectionFactory.getConnection().ping();
+            long latency = System.currentTimeMillis() - startTime;
             
-            // PING successful
+            // PING successful - record latency and update state
+            metricsService.recordLatency(DependencyType.REDIS, latency);
             handleSuccess();
             
         } catch (Exception e) {

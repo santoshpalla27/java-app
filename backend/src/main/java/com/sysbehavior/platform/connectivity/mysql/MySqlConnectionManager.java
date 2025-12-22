@@ -61,13 +61,16 @@ public class MySqlConnectionManager {
      */
     @Scheduled(fixedDelay = 5000, initialDelay = 10000)
     public void checkHealth() {
+        long startTime = System.currentTimeMillis();
         try {
             // Attempt to get a connection and execute a simple query
             try (Connection conn = dataSource.getConnection()) {
                 boolean isValid = conn.isValid(5); // 5 second timeout
+                long latency = System.currentTimeMillis() - startTime;
                 
                 if (isValid) {
-                    // Connection successful - update state
+                    // Connection successful - update state and record latency
+                    metricsService.recordLatency(DependencyType.MYSQL, latency);
                     handleSuccess();
                 } else {
                     // Connection invalid

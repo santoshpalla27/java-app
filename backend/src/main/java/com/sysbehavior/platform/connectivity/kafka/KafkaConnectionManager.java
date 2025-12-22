@@ -70,6 +70,7 @@ public class KafkaConnectionManager {
      */
     @Scheduled(fixedDelay = 10000, initialDelay = 15000)
     public void checkHealth() {
+        long startTime = System.currentTimeMillis();
         try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
             // Query cluster metadata with timeout
             DescribeClusterResult clusterResult = adminClient.describeCluster();
@@ -77,8 +78,10 @@ public class KafkaConnectionManager {
             // Wait for result with timeout
             String clusterId = clusterResult.clusterId().get(5, TimeUnit.SECONDS);
             int nodeCount = clusterResult.nodes().get(5, TimeUnit.SECONDS).size();
+            long latency = System.currentTimeMillis() - startTime;
             
             log.debug("Kafka cluster accessible: {} ({} nodes)", clusterId, nodeCount);
+            metricsService.recordLatency(DependencyType.KAFKA, latency);
             handleSuccess(nodeCount);
             
         } catch (Exception e) {
