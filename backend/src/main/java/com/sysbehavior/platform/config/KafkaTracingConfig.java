@@ -7,24 +7,20 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapSetter;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.listener.RecordInterceptor;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Kafka configuration with OpenTelemetry trace propagation.
  * 
- * Ensures trace context is propagated across Kafka producers and consumers
- * using W3C Trace Context headers.
+ * Provides helper methods to inject and extract trace context
+ * using W3C Trace Context headers in Kafka messages.
  */
 @Configuration
 public class KafkaTracingConfig {
@@ -53,9 +49,11 @@ public class KafkaTracingConfig {
     private static final TextMapGetter<Headers> KAFKA_HEADER_GETTER = new TextMapGetter<>() {
         @Override
         public Iterable<String> keys(Headers headers) {
-            return () -> headers.spliterator().asIterator().stream()
-                .map(Header::key)
-                .iterator();
+            List<String> keys = new ArrayList<>();
+            for (Header header : headers) {
+                keys.add(header.key());
+            }
+            return keys;
         }
         
         @Override
@@ -67,48 +65,6 @@ public class KafkaTracingConfig {
             return new String(header.value(), StandardCharsets.UTF_8);
         }
     };
-    
-    /**
-     * Configure Kafka listener container factory with trace propagation.
-     */
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(
-            ConsumerFactory<String, String> consumerFactory) {
-        
-        ConcurrentKafkaListenerContainerFactory<String, String> factory = 
-            new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory);
-        
-        // Add record interceptor for trace extraction
-        factory.setRecordInterceptor(new RecordInterceptor<String, String>() {
-            @Override
-            public ConsumerRecord<String, String> intercept(ConsumerRecord<String, String> record) {
-                // Extract trace context from Kafka headers
-                Context extractedContext = openTelemetry.getPropagators().getTextMapPropagator()
-                    .extract(Context.current(), record.headers(), KAFKA_HEADER_GETTER);
-                
-                // Create consumer span
-                Span span = tracer.spanBuilder("kafka.consume")
-                    .setParent(extractedContext)
-                    .setSpanKind(SpanKind.CONSUMER)
-                    .setAttribute("messaging.system", "kafka")
-                    .setAttribute("messaging.destination", record.topic())
-                    .setAttribute("messaging.operation", "receive")
-                    .setAttribute("messaging.kafka.partition", record.partition())
-                    .setAttribute("messaging.kafka.offset", record.offset())
-                    .startSpan();
-                
-                try {
-                    // Make span current for downstream processing
-                    return record;
-                } finally {
-                    span.end();
-                }
-            }
-        });
-        
-        return factory;
-    }
     
     /**
      * Helper method to inject trace context into producer records.
@@ -129,5 +85,14 @@ public class KafkaTracingConfig {
         } finally {
             span.end();
         }
+    }
+    
+    /**
+     * Helper method to extract trace context from Kafka headers.
+     * Returns the extracted context that can be used as parent for new spans.
+     */
+    public Context extractTraceContext(Headers headers) {
+        return openTelemetry.getPropagators().getTextMapPropagator()
+            .extract(Context.current(), headers, KAFKA_HEADER_GETTER);
     }
 }
