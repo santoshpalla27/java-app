@@ -250,6 +250,19 @@ services:
       - elasticsearch
     restart: unless-stopped
 
+  # Kibana Setup - Auto-provision index patterns and saved searches
+  kibana-setup:
+    image: curlimages/curl:latest
+    container_name: sys-kibana-setup
+    volumes:
+      - ./monitoring/kibana/setup-index-pattern.sh:/setup.sh:ro
+    networks:
+      - sys-net
+    depends_on:
+      - kibana
+    command: sh /setup.sh
+    restart: "no"
+
   # ==========================================
   # FLUENT BIT (Log Collection - Cloud Native)
   # ==========================================
